@@ -6,10 +6,13 @@ set -e -u
 }
 [ $(id -u) -eq 0 ] || exec sudo "$0" "$@"
 dev=/sys/devices/platform/i8042/serio0/input/input0/input0::scrolllock
-echo 0 > "$dev/brightness"
-sleep "$1"
-echo 1 > "$dev/brightness"
-sleep "$2"
-poweroff
+while true
+do
+    echo 0 > "$dev/brightness"
+    sleep "$1"
+    echo 1 > "$dev/brightness"
+    timeout --foreground "$2" sh -c 'read x' ||
+        poweroff
+done
 
 # vim:ts=4 sts=4 sw=4 et
