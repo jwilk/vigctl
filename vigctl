@@ -1,4 +1,8 @@
 #!/bin/sh
+
+# Copyright © 2019 Jakub Wilk <jwilk@jwilk.net>
+# SPDX-License-Identifier: MIT
+
 set -e -u
 [ $# = 2 ] || {
     printf 'Usage: %s TIME1 TIME2\n' "${0##*/}" >&2
