@@ -1,22 +1,110 @@
-#!/bin/sh
+#!/usr/bin/env python3
+# encoding=UTF-8
 
 # Copyright © 2019 Jakub Wilk <jwilk@jwilk.net>
 # SPDX-License-Identifier: MIT
 
-set -e -u
-[ $# = 2 ] || {
-    printf 'Usage: %s TIME1 TIME2\n' "${0##*/}" >&2
-    exit 1
-}
-[ $(id -u) -eq 0 ] || exec sudo "$0" "$@"
-dev=/sys/devices/platform/i8042/serio0/input/input0/input0::scrolllock
-while true
-do
-    echo 0 > "$dev/brightness"
-    sleep "$1"
-    echo 1 > "$dev/brightness"
-    timeout --foreground "$2" sh -c 'read x' ||
-        poweroff
-done
+import argparse
+import os
+import pathlib
+import re
+import select
+import sys
+import threading
+import time
+
+import keyboardleds
+
+f''  # Python >= 3.6 is required
+
+def parse_time(s):
+    item_re = '[0-9]+[smhd]'
+    if not re.fullmatch(f'({item_re})+', s):
+        raise ValueError
+    dt = 0
+    for item in re.findall(item_re, s):
+        n = int(item[:-1])
+        unit = item[-1]
+        dt += n * dict(
+            d = 24 * 60 * 60,
+            h =      60 * 60,
+            m =           60,
+            s =            1,
+        )[unit]
+    return dt
+parse_time.__name__ = 'time'
+
+def get_time():
+    return time.clock_gettime(time.CLOCK_MONOTONIC)
+
+def fmt_time(t):
+    t = int(t)
+    m, s = divmod(t, 60)
+    h, m = divmod(m, 60)
+    d, h = divmod(h, 24)
+    r = ''
+    if d:
+        r += f'{d}d'
+    if h:
+        r += f'{h}h'
+    if m:
+        r += f'{m}m'
+    if s:
+        r += f'{s}s'
+    return r
+
+def wait(timeout, kwd='ETA'):
+    poll = select.poll()
+    stdin_fd = sys.stdin.fileno()
+    poll.register(stdin_fd, select.POLLIN)
+    time_start = get_time()
+    time_end = time_start + timeout
+    while True:
+        time = get_time()
+        if time > time_end:
+            break
+        else:
+            eta = fmt_time(time_end - time)
+            print(f'\r\033[2K{kwd}: {eta}', end='', file=sys.stderr, flush=True)
+        fds = poll.poll(1000)
+        if fds:
+            restart = True
+            os.read(stdin_fd, 1024)
+            return True
+
+def execvp(*cmdline):
+    os.execvp(cmdline[0], cmdline)
+
+def main():
+    ap = argparse.ArgumentParser()
+    default_timeout = '3h'
+    ap.add_argument('-t', dest='timeout', metavar='TIME', default='3h', type=parse_time, help=f'time until the alarm goes off (default: {default_timeout})')
+    default_duration = '1h'
+    ap.add_argument('-d', dest='duration', metavar='TIME', default='1h', type=parse_time, help=f'alarm duration (default: {default_duration})')
+    default_kbd_dev = '/dev/input/by-path/platform-i8042-serio-0-event-kbd'
+    ap.add_argument('-K', dest='kbd', metavar='PATH', default=default_kbd_dev, type=pathlib.Path, help=f'keyboard device (default: {default_kbd_dev})')
+    default_led = 'scrolllock'
+    ap.add_argument('-L', dest='led', metavar='LED', choices=('capslock', 'numlock', 'scrolllock'), default=default_led, help=f'keyboard LED for alerting (default: {default_led})')
+    opts = ap.parse_args()
+    if os.getuid() != 0:
+        execvp('sudo', '-E', '-u', 'root', sys.executable, *sys.argv)
+    ledkit = keyboardleds.LedKit(opts.kbd)
+    led = getattr(ledkit, f'{opts.led[:-4]}_lock')
+    del opts.kbd
+    while True:
+        if wait(opts.timeout):
+            continue
+        led.set()
+        try:
+            if wait(opts.duration, kwd='ALERT'):
+                continue
+        finally:
+            led.reset()
+        break
+    print(file=sys.stderr)
+    execvp('poweroff')
+
+if __name__ == '__main__':
+    main()
 
 # vim:ts=4 sts=4 sw=4 et
