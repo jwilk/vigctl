@@ -78,13 +78,21 @@ def execvp(*cmdline):
 def main():
     ap = argparse.ArgumentParser()
     default_timeout = '3h'
-    ap.add_argument('-t', dest='timeout', metavar='TIME', default='3h', type=parse_time, help=f'time until the alarm goes off (default: {default_timeout})')
+    ap.add_argument('-t', dest='timeout', metavar='TIME', default='3h', type=parse_time,
+        help=f'time until the alarm goes off (default: {default_timeout})'
+    )
     default_duration = '1h'
-    ap.add_argument('-d', dest='duration', metavar='TIME', default='1h', type=parse_time, help=f'alarm duration (default: {default_duration})')
+    ap.add_argument('-d', dest='duration', metavar='TIME', default='1h', type=parse_time,
+        help=f'alarm duration (default: {default_duration})'
+    )
     default_kbd_dev = '/dev/input/by-path/platform-i8042-serio-0-event-kbd'
-    ap.add_argument('-K', dest='kbd', metavar='PATH', default=default_kbd_dev, type=pathlib.Path, help=f'keyboard device (default: {default_kbd_dev})')
+    ap.add_argument('-K', dest='kbd', metavar='PATH', default=default_kbd_dev, type=pathlib.Path,
+        help=f'keyboard device (default: {default_kbd_dev})'
+    )
     default_led = 'scrolllock'
-    ap.add_argument('-L', dest='led', metavar='LED', choices=('capslock', 'numlock', 'scrolllock'), default=default_led, help=f'keyboard LED for alerting (default: {default_led})')
+    ap.add_argument('-L', dest='led', metavar='LED', choices=('capslock', 'numlock', 'scrolllock'), default=default_led,
+        help=f'keyboard LED for alerting (default: {default_led})'
+    )
     opts = ap.parse_args()
     if os.getuid() != 0:
         execvp('sudo', '-E', '-u', 'root', sys.executable, *sys.argv)
