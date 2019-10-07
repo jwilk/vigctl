@@ -8,7 +8,7 @@ import argparse
 import os
 import pathlib
 import re
-import select
+import selectors
 import sys
 import threading
 import time
@@ -54,9 +54,9 @@ def fmt_time(t):
     return r
 
 def wait(timeout, kwd='ETA'):
-    poll = select.poll()
     stdin_fd = sys.stdin.fileno()
-    poll.register(stdin_fd, select.POLLIN)
+    slc = selectors.DefaultSelector()
+    slc.register(sys.stdin, selectors.EVENT_READ)
     time_start = get_time()
     time_end = time_start + timeout
     while True:
@@ -66,8 +66,7 @@ def wait(timeout, kwd='ETA'):
         else:
             eta = fmt_time(time_end - time)
             print(f'\r\033[2K{kwd}: {eta}', end='', file=sys.stderr, flush=True)
-        fds = poll.poll(1000)
-        if fds:
+        if slc.select(timeout=1):
             restart = True
             os.read(stdin_fd, 1024)
             return True
