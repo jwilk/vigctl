@@ -49,7 +49,7 @@ def fmt_time(t):
         r += f'{h}h'
     if m:
         r += f'{m}m'
-    if s:
+    if s or (t == 0):
         r += f'{s}s'
     return r
 
