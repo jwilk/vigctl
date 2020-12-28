@@ -66,7 +66,6 @@ def wait(timeout, kwd='ETA'):
             eta = fmt_time(time_end - time)
             print(f'\r\033[2K{kwd}: {eta}', end='', file=sys.stderr, flush=True)
         if slc.select(timeout=1):
-            restart = True
             os.read(stdin_fd, 1024)
             return True
 
