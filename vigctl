@@ -14,7 +14,7 @@ import time
 
 import keyboardleds
 
-f''  # Python >= 3.6 is required
+0_0  # Python >= 3.6 is required
 
 def parse_time(s):
     item_re = '[0-9]+[smhd]'
