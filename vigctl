@@ -60,11 +60,11 @@ def wait(timeout, kwd='ETA'):
     time_end = time_start + timeout
     while True:
         time = get_time()
-        if time > time_end:
+        time_rem = time_end - time
+        if time_rem < 0:
             break
-        else:
-            eta = fmt_time(time_end - time)
-            print(f'\r\033[2K{kwd}: {eta}', end='', file=sys.stderr, flush=True)
+        eta = fmt_time(time_rem)
+        print(f'\r\033[2K{kwd}: {eta}', end='', file=sys.stderr, flush=True)
         if slc.select(timeout=1):
             os.read(stdin_fd, 1024)
             return True
