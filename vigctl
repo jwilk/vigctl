@@ -9,6 +9,7 @@ import os
 import pathlib
 import re
 import selectors
+import signal
 import sys
 import time
 
@@ -98,6 +99,7 @@ def main():
     ledkit = keyboardleds.LedKit(opts.kbd)
     led = getattr(ledkit, f'{opts.led[:-4]}_lock')
     del opts.kbd
+    signal.signal(signal.SIGINT, signal.SIG_DFL)
     while True:
         if wait(opts.timeout):
             continue
