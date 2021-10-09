@@ -37,7 +37,7 @@ def get_time():
     return time.clock_gettime(time.CLOCK_MONOTONIC)
 
 def fmt_time(t):
-    t = int(t)
+    t = round(t)
     m, s = divmod(t, 60)
     h, m = divmod(m, 60)
     d, h = divmod(h, 24)
@@ -61,11 +61,14 @@ def wait(timeout, kwd='ETA'):
     while True:
         time = get_time()
         time_rem = time_end - time
-        if time_rem < 0:
+        if time_rem <= 0:
             break
         eta = fmt_time(time_rem)
         print(f'\r\033[2K{kwd}: {eta}', end='', file=sys.stderr, flush=True)
-        if slc.select(timeout=1):
+        sleep = time_rem % 1
+        if sleep == 0:
+            sleep = 1
+        if slc.select(timeout=sleep):
             os.read(stdin_fd, 1024)
             return True
 
