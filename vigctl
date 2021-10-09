@@ -59,8 +59,7 @@ def wait(timeout, kwd='ETA'):
     time_start = get_time()
     time_end = time_start + timeout
     while True:
-        time = get_time()
-        time_rem = time_end - time
+        time_rem = time_end - get_time()
         if time_rem <= 0:
             break
         eta = fmt_time(time_rem)
