@@ -57,7 +57,7 @@ def fmt_time(t):
         r += f'{s}s'
     return r
 
-def wait(timeout, kwd='ETA'):
+def wait(timeout, kwd='ETA', callback=object):
     stdin_fd = sys.stdin.fileno()
     slc = selectors.DefaultSelector()
     slc.register(sys.stdin, selectors.EVENT_READ)
@@ -75,6 +75,7 @@ def wait(timeout, kwd='ETA'):
         if slc.select(timeout=sleep):
             os.read(stdin_fd, 1024)
             return True
+        callback()
 
 def execvp(*cmdline):
     os.execvp(cmdline[0], cmdline)
@@ -109,7 +110,7 @@ def main():
             continue
         led.set()
         try:
-            if wait(opts.duration, kwd='ALERT'):
+            if wait(opts.duration, kwd='ALERT', callback=led.set):
                 continue
         finally:
             led.reset()
