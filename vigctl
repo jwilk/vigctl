@@ -5,6 +5,7 @@
 # SPDX-License-Identifier: MIT
 
 import argparse
+import errno
 import os
 import pathlib
 import re
@@ -12,8 +13,6 @@ import selectors
 import signal
 import sys
 import time
-
-import keyboardleds
 
 0_0  # Python >= 3.6 is required
 
@@ -80,6 +79,35 @@ def wait(timeout, kwd='ETA', callback=object):
 def execvp(*cmdline):
     os.execvp(cmdline[0], cmdline)
 
+class Led():
+
+    def __init__(self, sys_path):
+        self._path = sys_path
+        with open(self._path / 'max_brightness', 'rb') as fp:
+            self._max_brightness = fp.read()
+
+    def set(self, value=1):
+        bvalue = self._max_brightness if value else b'0'
+        with open(self._path / 'brightness', 'wb') as fp:
+            fp.write(bvalue)
+
+    def reset(self):
+        self.set(0)
+
+class Leds():
+
+    def __init__(self, dev_path):
+        dev_path = dev_path.resolve()
+        try:
+            rel_path = dev_path.relative_to('/dev/input')
+        except ValueError:
+            raise OSError(errno.ENOTTY, 'not an input device', str(dev_path))
+        self._path = '/sys/class/input/' / rel_path / 'device'
+
+    def __getattr__(self, attr):
+        [path, *_junk] = self._path.glob(f'*:{attr}')
+        return Led(path)
+
 def main():
     ap = argparse.ArgumentParser()
     default_timeout = '3h'
@@ -101,8 +129,8 @@ def main():
     opts = ap.parse_args()
     if os.getuid() != 0:
         execvp('sudo', '-E', '-u', 'root', sys.executable, *sys.argv)
-    ledkit = keyboardleds.LedKit(opts.kbd)
-    led = getattr(ledkit, f'{opts.led[:-4]}_lock')
+    ledkit = Leds(opts.kbd)
+    led = getattr(ledkit, opts.led)
     del opts.kbd
     signal.signal(signal.SIGINT, signal.SIG_DFL)
     while True:
