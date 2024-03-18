@@ -79,7 +79,7 @@ def wait(timeout, kwd='ETA', callback=object):
 def execvp(*cmdline):
     os.execvp(cmdline[0], cmdline)
 
-class Led():
+class Led:
 
     def __init__(self, sys_path):
         self._path = sys_path
@@ -94,7 +94,7 @@ class Led():
     def reset(self):
         self.set(0)
 
-class Leds():
+class Leds:
 
     def __init__(self, dev_path):
         dev_path = dev_path.resolve()
