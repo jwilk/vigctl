@@ -110,6 +110,7 @@ class Leds:
 
 def main():
     ap = argparse.ArgumentParser()
+    ap.color = False
     default_timeout = '3h'
     ap.add_argument('-t', dest='timeout', metavar='TIME', default='3h', type=parse_time,
         help=f'time until the alarm goes off (default: {default_timeout})'
