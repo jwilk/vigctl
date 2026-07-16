@@ -112,11 +112,11 @@ def main():
     ap = argparse.ArgumentParser()
     ap.color = False
     default_timeout = '3h'
-    ap.add_argument('-t', dest='timeout', metavar='TIME', default='3h', type=parse_time,
+    ap.add_argument('-t', dest='timeout', metavar='TIME', default=default_timeout, type=parse_time,
         help=f'time until the alarm goes off (default: {default_timeout})'
     )
     default_duration = '1h'
-    ap.add_argument('-d', dest='duration', metavar='TIME', default='1h', type=parse_time,
+    ap.add_argument('-d', dest='duration', metavar='TIME', default=default_duration, type=parse_time,
         help=f'alarm duration (default: {default_duration})'
     )
     default_kbd_dev = '/dev/input/by-path/platform-i8042-serio-0-event-kbd'
