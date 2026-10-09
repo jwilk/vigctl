@@ -127,6 +127,7 @@ def main():
     ap.add_argument('-L', dest='led', metavar='LED', choices=('capslock', 'numlock', 'scrolllock'), default=default_led,
         help=f'keyboard LED for alerting (default: {default_led})'
     )
+    ap.add_argument('-n', '--dry-run', action='store_true')
     opts = ap.parse_args()
     if os.getuid() != 0:
         execvp('sudo', '-E', '-u', 'root', sys.executable, *sys.argv)
@@ -145,7 +146,8 @@ def main():
             led.reset()
         break
     print(file=sys.stderr)
-    execvp('poweroff')
+    if not opts.dry_run:
+        execvp('poweroff')
 
 if __name__ == '__main__':
     main()
